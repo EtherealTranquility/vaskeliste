@@ -2,50 +2,144 @@
 <html lang="no">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>Vaskeliste</title>
   <style>
+    /* Fargene – endre her for å bytte tema */
+    :root {
+      --bakgrunn: #fdeef3;
+      --kort: #ffffff;
+      --tekst: #3b1c2c;
+      --dempet: #a0798a;
+      --rosa: #e0457b;
+      --rosa-lys: #f9d3e1;
+      --fri: #ffd9e7;
+      --kant: #f3c6d6;
+    }
+
     body {
       font-family: system-ui, -apple-system, sans-serif;
-      background: #f4f1ea;
-      color: #222;
+      background: var(--bakgrunn);
+      color: var(--tekst);
       margin: 0;
-      padding: 24px 16px;
+      padding: 24px 16px 110px;
     }
     main { max-width: 480px; margin: 0 auto; }
     h1 { margin: 0; font-size: 2rem; }
-    .dato { color: #777; margin: 4px 0 20px; }
+    h2 { font-size: 1.3rem; margin: 32px 0 4px; }
+    .dato { color: var(--dempet); margin: 4px 0 20px; }
+    .liten { color: var(--dempet); font-size: 0.9rem; margin: 0 0 14px; }
 
+    /* ---------- Faner nederst ---------- */
+    .faner {
+      position: fixed; left: 0; right: 0; bottom: 0;
+      display: flex; justify-content: center; gap: 8px;
+      background: var(--kort); border-top: 1px solid var(--kant);
+      padding: 6px 8px calc(6px + env(safe-area-inset-bottom));
+    }
+    .faner button {
+      flex: 1; max-width: 200px; border: 0; background: none; cursor: pointer;
+      display: flex; flex-direction: column; align-items: center; gap: 2px;
+      padding: 6px; font-size: 0.8rem; color: var(--dempet);
+    }
+    .faner .ikon { font-size: 1.4rem; filter: grayscale(1); opacity: 0.5; }
+    .faner button.aktiv { color: var(--rosa); font-weight: 600; }
+    .faner button.aktiv .ikon { filter: none; opacity: 1; }
+
+    /* ---------- Vaskeliste ---------- */
     .knapper { display: flex; gap: 8px; margin-bottom: 16px; }
     .knapper button {
-      flex: 1; padding: 10px; border: 0; border-radius: 10px;
-      background: #e3ddd0; font-size: 1rem; cursor: pointer;
+      flex: 1; padding: 10px; border: 0; border-radius: 999px;
+      background: var(--rosa-lys); font-size: 0.95rem; cursor: pointer; color: var(--tekst);
     }
-    .knapper button.aktiv { background: #222; color: #fff; }
+    .knapper button.aktiv { background: var(--rosa); color: #fff; }
 
     ul { list-style: none; padding: 0; margin: 0; }
     li {
-      display: flex; justify-content: space-between;
-      background: #fff; padding: 14px 16px; margin-bottom: 8px;
-      border-radius: 12px; font-size: 1.05rem;
+      display: flex; justify-content: space-between; align-items: center; gap: 12px;
+      background: var(--kort); padding: 14px 16px; margin-bottom: 8px;
+      border-radius: 14px; font-size: 1.05rem;
+      box-shadow: 0 1px 2px rgba(224, 69, 123, 0.08);
     }
     li .navn { font-weight: 600; }
-    li.fri { background: #dff0d8; }
+    li.fri { background: var(--fri); }
+
+    /* ---------- Ukens ord ---------- */
+    .ukensord {
+      background: linear-gradient(135deg, #e0457b, #ff8fb1);
+      color: #fff; border-radius: 18px; padding: 18px 20px; margin-bottom: 8px;
+    }
+    .ukensord .etikett { font-size: 0.75rem; letter-spacing: 0.12em; opacity: 0.85; }
+    .ukensord .ord { font-size: 1.9rem; font-weight: 700; margin: 2px 0; word-break: break-word; }
+    .ukensord .av { font-size: 0.9rem; opacity: 0.85; }
+
+    .kort { background: var(--kort); border-radius: 14px; padding: 16px; margin-bottom: 12px; }
+    .kort label { display: block; font-weight: 600; margin-bottom: 6px; }
+    .rad { display: flex; gap: 8px; }
+    input, select {
+      flex: 1; min-width: 0; font-size: 1rem; padding: 10px 12px;
+      border: 1px solid var(--kant); border-radius: 10px; background: #fff; color: var(--tekst);
+    }
+    input:focus, select:focus { outline: 2px solid var(--rosa); outline-offset: -1px; }
+    .hoved {
+      border: 0; border-radius: 10px; padding: 10px 16px; font-size: 1rem;
+      background: var(--rosa); color: #fff; cursor: pointer;
+    }
+    .hoved:disabled { opacity: 0.5; }
+    .lenke { background: none; border: 0; color: var(--dempet); text-decoration: underline; cursor: pointer; font-size: 0.9rem; padding: 0; }
+    .melding { min-height: 1.2em; font-size: 0.9rem; margin: 8px 0 0; }
+    .melding.feil { color: #b3261e; }
+    .melding.ok { color: #2e7d32; }
+
+    li.forslag { flex-wrap: wrap; }
+    li.forslag .tekst { flex: 1; min-width: 0; }
+    li.forslag .ordtekst { font-weight: 600; word-break: break-word; }
+    li.forslag .av { color: var(--dempet); font-size: 0.85rem; }
+    li.forslag .velgere { color: var(--dempet); font-size: 0.8rem; width: 100%; }
+    .stem {
+      border: 1px solid var(--rosa); background: #fff; color: var(--rosa); border-radius: 999px;
+      padding: 6px 14px; font-size: 0.95rem; cursor: pointer; white-space: nowrap;
+    }
+    .stem.valgt { background: var(--rosa); color: #fff; }
   </style>
 </head>
 <body>
   <main>
-    <h1 id="tittel">Uke</h1>
-    <p class="dato" id="dato"></p>
+    <!-- Fane 1: Vaskeliste -->
+    <div id="fane-vask">
+      <h1 id="tittel">Uke</h1>
+      <p class="dato" id="dato"></p>
 
-    <div class="knapper">
-      <button data-uke="-1">Forrige uke</button>
-      <button data-uke="0" class="aktiv">Denne uka</button>
-      <button data-uke="1">Neste uke</button>
+      <div class="knapper">
+        <button data-uke="-1">Forrige uke</button>
+        <button data-uke="0" class="aktiv">Denne uka</button>
+        <button data-uke="1">Neste uke</button>
+      </div>
+
+      <ul id="liste"></ul>
     </div>
 
-    <ul id="liste"></ul>
+    <!-- Fane 2: Ukens ord -->
+    <div id="fane-ord" hidden>
+      <h1>Ukens ord</h1>
+      <p class="dato">Kåres søndag kveld</p>
+
+      <div class="ukensord">
+        <div class="etikett">DENNE UKA</div>
+        <div class="ord" id="ukensord-ord">Ingen ennå</div>
+        <div class="av" id="ukensord-av">Første vinner kåres søndag kveld</div>
+      </div>
+
+      <h2>Forslag til neste uke</h2>
+      <p class="liten" id="fase-tekst"></p>
+      <div id="ord-innhold"></div>
+    </div>
   </main>
+
+  <nav class="faner">
+    <button data-fane="vask" class="aktiv"><span class="ikon">🧽</span>Vaskeliste</button>
+    <button data-fane="ord"><span class="ikon">💬</span>Ukens ord</button>
+  </nav>
 
   <script>
     // ---------- INNSTILLINGER (det eneste du trenger å endre) ----------
@@ -53,11 +147,17 @@
                       "🛁 Bad m/ vaskemaskin", "🚿 Bad u/ vaskemaskin", "♻️ Pant", "😎 Fri", "🍾 Glass og metall"];
 
     // Rekkefølgen slik den var i startuka (uke 44)
-    const folk = ["Robert", "Jente", "Harald", "Santosh", "Emil",
+    const folk = ["Robert", "Zandra", "Harald", "Santosh", "Emil",
                   "Filip", "Joel", "Daniel", "Chris"];
 
     const start = new Date(2026, 9, 26);   // mandag 26. oktober 2026 (måned 9 = oktober)
+
+    // Lim inn URL-en fra Google Apps Script her (står tom = ukens ord vises ikke)
+    const SKRIPT_URL = "https://script.google.com/macros/s/AKfycbwhBACgNm_cwk8zI7Ns-L0FY1jVY0BiewLxh2l8nhOVS2B7Jpo7MJKgoz-whzTsKJXZsw/exec";
     // -------------------------------------------------------------------
+
+
+    // =================== VASKELISTA ===================
 
     // Hvor mange uker har gått siden start?
     function ukerSidenStart(dato) {
@@ -114,6 +214,189 @@
     });
 
     visUke(0);
+
+
+    // =================== FANER ===================
+
+    function visFane(fane) {
+      document.getElementById("fane-vask").hidden = fane !== "vask";
+      document.getElementById("fane-ord").hidden  = fane !== "ord";
+      document.querySelectorAll(".faner button").forEach(b =>
+        b.className = b.dataset.fane === fane ? "aktiv" : "");
+      window.scrollTo(0, 0);
+      try { history.replaceState(null, "", fane === "ord" ? "#ord" : location.pathname); } catch (e) {}
+    }
+    document.querySelectorAll(".faner button").forEach(b => b.onclick = () => visFane(b.dataset.fane));
+    if (location.hash === "#ord") visFane("ord");
+
+
+    // =================== UKENS ORD ===================
+
+    let meg = null;        // { navn, pin } når du er logget inn
+    let data = null;       // siste svar fra scriptet
+    let melding = { tekst: "", type: "" };
+
+    // Telefonen husker hvem du er (kan feile i privat modus – da må du bare logge inn igjen)
+    try { meg = JSON.parse(localStorage.getItem("meg")); } catch (e) {}
+    function lagreMeg() {
+      try { meg ? localStorage.setItem("meg", JSON.stringify(meg)) : localStorage.removeItem("meg"); } catch (e) {}
+    }
+
+    // All kontakt med Google Sheets går gjennom denne
+    async function api(handling, ekstra = {}) {
+      const svar = await fetch(SKRIPT_URL, {
+        method: "POST",
+        body: JSON.stringify({ handling, ...meg, ...ekstra })
+      });
+      return svar.json();
+    }
+
+    // Lager HTML-elementer trygt (brukerens tekst blir aldri tolket som kode)
+    function el(tag, attr = {}, ...barn) {
+      const e = document.createElement(tag);
+      for (const [k, v] of Object.entries(attr)) {
+        if (k.startsWith("on")) e[k] = v; else if (v !== false) e.setAttribute(k, v);
+      }
+      barn.flat().forEach(b => e.append(b));
+      return e;
+    }
+
+    function visMelding(tekst, type = "feil") { melding = { tekst, type }; tegnOrd(); }
+
+    function tegnUkensOrd() {
+      const v = data && data.ukensOrd;
+      if (!v) return;
+      document.getElementById("ukensord-ord").textContent = v.ord;
+      document.getElementById("ukensord-av").textContent =
+        `foreslått av ${v.av} · ${v.stemmer} ${v.stemmer === 1 ? "stemme" : "stemmer"}`;
+    }
+
+    function tegnOrd() {
+      const innhold = document.getElementById("ord-innhold");
+      const faseTekst = document.getElementById("fase-tekst");
+      innhold.innerHTML = "";
+      const meldingEl = el("p", { class: "melding " + melding.type }, melding.tekst);
+
+      // --- Ikke logget inn: velg navn og PIN ---
+      if (!meg) {
+        faseTekst.textContent = "Logg inn for å foreslå og stemme.";
+        const velg = el("select", { id: "velg-navn" },
+          el("option", { value: "" }, "Hvem er du?"),
+          folk.map(n => el("option", { value: n }, n)));
+        const pin = el("input", { id: "pin", type: "password", inputmode: "numeric",
+                                  maxlength: "4", placeholder: "PIN (4 siffer)", autocomplete: "off" });
+        const knapp = el("button", { class: "hoved" }, "Logg inn");
+        knapp.onclick = async () => {
+          if (!velg.value) return visMelding("Velg navnet ditt.");
+          if (!/^\d{4}$/.test(pin.value)) return visMelding("PIN må være 4 siffer.");
+          knapp.disabled = true; knapp.textContent = "Sjekker…";
+          try {
+            const svar = await api("logginn", { navn: velg.value, pin: pin.value });
+            if (!svar.ok) { knapp.disabled = false; knapp.textContent = "Logg inn"; return visMelding(svar.feil); }
+            meg = { navn: velg.value, pin: pin.value };
+            lagreMeg();
+            visMelding(svar.ny ? "PIN registrert! Husk den 😉" : "Velkommen tilbake!", "ok");
+          } catch (e) {
+            knapp.disabled = false; knapp.textContent = "Logg inn";
+            visMelding("Fikk ikke kontakt. Prøv igjen.");
+          }
+        };
+        innhold.append(el("div", { class: "kort" },
+          el("label", { for: "velg-navn" }, "Velg navn og PIN"),
+          el("div", { class: "rad" }, velg),
+          el("div", { class: "rad", style: "margin-top:8px" }, pin, knapp),
+          el("p", { class: "liten", style: "margin:8px 0 0" },
+             "Første gang du logger inn, blir PIN-en du skriver din PIN."),
+          meldingEl));
+        return;
+      }
+
+      if (!data) { faseTekst.textContent = "Henter…"; return; }
+
+      const kanForeslaa = data.fase !== "stemming";
+      const kanStemme  = data.fase !== "forslag";
+      faseTekst.textContent =
+        data.fase === "begge"    ? "Foreslå ord og stem – vinneren blir ukens ord neste uke." :
+        data.fase === "stemming" ? "Stemmingen er åpen til midnatt – stem på favoritten din!" :
+                                   `Kom med forslag! Stemmingen åpner søndag kl. ${data.stemmingFraKl}.`;
+
+      // --- Logget inn som ... ---
+      const loggUt = el("button", { class: "lenke" }, "Logg ut");
+      loggUt.onclick = () => { meg = null; lagreMeg(); melding = { tekst: "", type: "" }; tegnOrd(); };
+      innhold.append(el("p", { class: "liten" }, `Logget inn som ${meg.navn} · `, loggUt));
+
+      // --- Skriv forslag ---
+      if (kanForeslaa) {
+        const felt = el("input", { id: "nytt-ord", maxlength: "30", placeholder: "Nytt ord…" });
+        const send = el("button", { class: "hoved" }, "Foreslå");
+        send.onclick = async () => {
+          if (!felt.value.trim()) return;
+          send.disabled = true; send.textContent = "Sender…";
+          await kjor("foreslaa", { ord: felt.value }, "Forslaget er lagt inn!");
+        };
+        felt.onkeydown = e => { if (e.key === "Enter") send.click(); };
+        innhold.append(el("div", { class: "kort" },
+          el("label", { for: "nytt-ord" }, "Foreslå ukens ord"),
+          el("div", { class: "rad" }, felt, send)));
+      }
+      innhold.append(meldingEl);
+
+      // --- Liste over forslag ---
+      if (!data.forslag.length) {
+        innhold.append(el("p", { class: "liten" }, "Ingen forslag ennå denne uka."));
+        return;
+      }
+      const ul = el("ul");
+      data.forslag.forEach(f => {
+        const minStemme = f.velgere.includes(meg.navn);
+        const deler = [el("div", { class: "tekst" },
+          el("div", { class: "ordtekst" }, f.ord),
+          el("div", { class: "av" }, "av " + f.av))];
+        if (kanStemme) {
+          const k = el("button", { class: "stem" + (minStemme ? " valgt" : "") },
+                       (minStemme ? "✓ " : "") + f.velgere.length + " 👍");
+          k.onclick = async () => {
+            if (minStemme) return;
+            k.disabled = true;
+            await kjor("stem", { ord: f.ord }, "Stemme registrert!");
+          };
+          deler.push(k);
+          if (f.velgere.length) deler.push(el("div", { class: "velgere" }, f.velgere.join(", ")));
+        }
+        ul.append(el("li", { class: "forslag" }, deler));
+      });
+      innhold.append(ul);
+    }
+
+    // Sender en handling og tegner siden på nytt med svaret
+    async function kjor(handling, ekstra, okTekst) {
+      try {
+        const svar = await api(handling, ekstra);
+        if (!svar.ok) return visMelding(svar.feil);
+        data = svar;
+        tegnUkensOrd();
+        visMelding(okTekst, "ok");
+      } catch (e) {
+        visMelding("Fikk ikke kontakt. Prøv igjen.");
+      }
+    }
+
+    async function startOrd() {
+      if (!SKRIPT_URL) {                       // ikke koblet til Google Sheets ennå
+        document.getElementById("fase-tekst").textContent = "Kommer snart 👀";
+        return;
+      }
+      tegnOrd();
+      try {
+        data = await api("hent");
+        tegnUkensOrd();
+        tegnOrd();
+      } catch (e) {
+        document.getElementById("fase-tekst").textContent = "Fikk ikke hentet ukens ord akkurat nå.";
+      }
+    }
+
+    startOrd();
   </script>
 </body>
 </html>
