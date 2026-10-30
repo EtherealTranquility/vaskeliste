@@ -39,8 +39,9 @@
     <p class="dato" id="dato"></p>
 
     <div class="knapper">
-      <button id="denne" class="aktiv">Denne uka</button>
-      <button id="neste">Neste uke</button>
+      <button data-uke="-1">Forrige uke</button>
+      <button data-uke="0" class="aktiv">Denne uka</button>
+      <button data-uke="1">Neste uke</button>
     </div>
 
     <ul id="liste"></ul>
@@ -48,11 +49,11 @@
 
   <script>
     // ---------- INNSTILLINGER (det eneste du trenger å endre) ----------
-    const oppgaver = ["Vaske gulv", "Kaste søppel", "Fri", "Vaske kjøkken",
-                      "Vaske bad nr 1", "Vaske bad nr 2", "Pant", "Fri", "Kaste glass"];
+    const oppgaver = ["🧹 Gulv", "🗑️ Søppel", "😎 Fri", "🍳 Kjøkken",
+                      "🛁 Bad m/ vaskemaskin", "🚿 Bad u/ vaskemaskin", "♻️ Pant", "😎 Fri", "🍾 Glass og metall"];
 
     // Rekkefølgen slik den var i startuka (uke 44)
-    const folk = ["Robert", "Zandra", "Harald", "Santosh", "Emil",
+    const folk = ["Robert", "Jente", "Harald", "Santosh", "Emil",
                   "Filip", "Joel", "Daniel", "Chris"];
 
     const start = new Date(2026, 9, 26);   // mandag 26. oktober 2026 (måned 9 = oktober)
@@ -96,17 +97,21 @@
       oppgaver.forEach((oppgave, i) => {
         const indeks = ((i - n) % folk.length + folk.length) % folk.length;
         const li = document.createElement("li");
-        if (oppgave === "Fri") li.className = "fri";
+        if (oppgave.includes("Fri")) li.className = "fri";
         li.innerHTML = `<span>${oppgave}</span><span class="navn">${folk[indeks]}</span>`;
         liste.appendChild(li);
       });
     }
 
     // Knappene
-    const denne = document.getElementById("denne");
-    const neste = document.getElementById("neste");
-    denne.onclick = () => { visUke(0); denne.className = "aktiv"; neste.className = ""; };
-    neste.onclick = () => { visUke(1); neste.className = "aktiv"; denne.className = ""; };
+    const knapper = document.querySelectorAll(".knapper button");
+    knapper.forEach(knapp => {
+      knapp.onclick = () => {
+        visUke(Number(knapp.dataset.uke));
+        knapper.forEach(k => k.className = "");
+        knapp.className = "aktiv";
+      };
+    });
 
     visUke(0);
   </script>
