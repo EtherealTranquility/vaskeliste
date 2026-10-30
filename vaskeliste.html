@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Vaskeliste</title>
+  <style>
+    body {
+      font-family: system-ui, -apple-system, sans-serif;
+      background: #f4f1ea;
+      color: #222;
+      margin: 0;
+      padding: 24px 16px;
+    }
+    main { max-width: 480px; margin: 0 auto; }
+    h1 { margin: 0; font-size: 2rem; }
+    .dato { color: #777; margin: 4px 0 20px; }
+
+    .knapper { display: flex; gap: 8px; margin-bottom: 16px; }
+    .knapper button {
+      flex: 1; padding: 10px; border: 0; border-radius: 10px;
+      background: #e3ddd0; font-size: 1rem; cursor: pointer;
+    }
+    .knapper button.aktiv { background: #222; color: #fff; }
+
+    ul { list-style: none; padding: 0; margin: 0; }
+    li {
+      display: flex; justify-content: space-between;
+      background: #fff; padding: 14px 16px; margin-bottom: 8px;
+      border-radius: 12px; font-size: 1.05rem;
+    }
+    li .navn { font-weight: 600; }
+    li.fri { background: #dff0d8; }
+  </style>
+</head>
+<body>
+  <main>
+    <h1 id="tittel">Uke</h1>
+    <p class="dato" id="dato"></p>
+
+    <div class="knapper">
+      <button id="denne" class="aktiv">Denne uka</button>
+      <button id="neste">Neste uke</button>
+    </div>
+
+    <ul id="liste"></ul>
+  </main>
+
+  <script>
+    // ---------- INNSTILLINGER (det eneste du trenger å endre) ----------
+    const oppgaver = ["Vaske gulv", "Kaste søppel", "Fri", "Vaske kjøkken",
+                      "Vaske bad nr 1", "Vaske bad nr 2", "Pant", "Fri", "Kaste glass"];
+
+    // Rekkefølgen slik den var i startuka (uke 44)
+    const folk = ["Robert", "Zandra", "Harald", "Santosh", "Emil",
+                  "Filip", "Joel", "Daniel", "Chris"];
+
+    const start = new Date(2026, 9, 26);   // mandag 26. oktober 2026 (måned 9 = oktober)
+    // -------------------------------------------------------------------
+
+    // Hvor mange uker har gått siden start?
+    function ukerSidenStart(dato) {
+      const dager = Math.round((dato - start) / (24 * 60 * 60 * 1000));
+      return Math.floor(dager / 7);
+    }
+
+    // Vanlig ukenummer, bare for å vise "Uke 44" øverst
+    function ukenummer(dato) {
+      const d = new Date(Date.UTC(dato.getFullYear(), dato.getMonth(), dato.getDate()));
+      const dag = d.getUTCDay() || 7;
+      d.setUTCDate(d.getUTCDate() + 4 - dag);
+      const nyttaar = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
+      return Math.ceil(((d - nyttaar) / 86400000 + 1) / 7);
+    }
+
+    function visUke(ekstraUker) {
+      const idag = new Date();
+      idag.setHours(0, 0, 0, 0);
+      idag.setDate(idag.getDate() + ekstraUker * 7);
+
+      const n = ukerSidenStart(idag);
+      document.getElementById("tittel").textContent = "Uke " + ukenummer(idag);
+
+      // Finn mandag og søndag i uka som vises
+      const mandag = new Date(start);
+      mandag.setDate(start.getDate() + n * 7);
+      const sondag = new Date(mandag);
+      sondag.setDate(mandag.getDate() + 6);
+      const fmt = { day: "numeric", month: "long" };
+      document.getElementById("dato").textContent =
+        mandag.toLocaleDateString("no-NO", fmt) + " – " + sondag.toLocaleDateString("no-NO", fmt);
+
+      // Selve rotasjonen: hver uke flytter navnene ett hakk ned
+      const liste = document.getElementById("liste");
+      liste.innerHTML = "";
+      oppgaver.forEach((oppgave, i) => {
+        const indeks = ((i - n) % folk.length + folk.length) % folk.length;
+        const li = document.createElement("li");
+        if (oppgave === "Fri") li.className = "fri";
+        li.innerHTML = `<span>${oppgave}</span><span class="navn">${folk[indeks]}</span>`;
+        liste.appendChild(li);
+      });
+    }
+
+    // Knappene
+    const denne = document.getElementById("denne");
+    const neste = document.getElementById("neste");
+    denne.onclick = () => { visUke(0); denne.className = "aktiv"; neste.className = ""; };
+    neste.onclick = () => { visUke(1); neste.className = "aktiv"; denne.className = ""; };
+
+    visUke(0);
+  </script>
+</body>
+</html>
