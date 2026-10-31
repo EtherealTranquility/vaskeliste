@@ -13,7 +13,6 @@
       --dempet: #a0798a;
       --rosa: #e0457b;
       --rosa-lys: #f9d3e1;
-      --fri: #ffd9e7;
       --kant: #f3c6d6;
     }
 
@@ -62,7 +61,6 @@
       box-shadow: 0 1px 2px rgba(224, 69, 123, 0.08);
     }
     li .navn { font-weight: 600; }
-    li.fri { background: var(--fri); }
 
     /* ---------- Ukens ord ---------- */
     .ukensord {
@@ -149,7 +147,7 @@
     </div>
 
     <footer class="bunntekst">
-      <div class="firma">BørveSoft Enterprise Solutions™</div>
+      <div class="firma">BørveSoft Enterprise Solutions™ – offisiell IT-leverandør til Girlsa 🩷🩷</div>
       <div class="slagord">Leading the paradigm shift in synergistic household facilitation</div>
       <p>© <span id="aar">2026</span> BørveSoft Enterprise Solutions™, en del av Børve Group International ·
         Utviklet av Daniel, Kollektivets IT-konsulent (honorar: én pils) ·
@@ -221,7 +219,6 @@
       oppgaver.forEach((oppgave, i) => {
         const indeks = ((i - n) % folk.length + folk.length) % folk.length;
         const li = document.createElement("li");
-        if (oppgave.includes("Fri")) li.className = "fri";
         li.innerHTML = `<span>${oppgave}</span><span class="navn">${folk[indeks]}</span>`;
         liste.appendChild(li);
       });
