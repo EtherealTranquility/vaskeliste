@@ -101,6 +101,16 @@
       padding: 6px 14px; font-size: 0.95rem; cursor: pointer; white-space: nowrap;
     }
     .stem.valgt { background: var(--rosa); color: #fff; }
+
+    .historikk li { font-size: 1rem; padding: 12px 16px; }
+    .historikk .uke { color: var(--dempet); white-space: nowrap; }
+    .historikk .ord { font-weight: 600; text-align: right; word-break: break-word; }
+
+    /* ---------- Bunntekst ---------- */
+    .bunntekst { margin-top: 48px; text-align: center; color: var(--dempet); font-size: 0.75rem; line-height: 1.5; }
+    .bunntekst .firma { font-weight: 700; font-size: 0.9rem; color: var(--tekst); }
+    .bunntekst .slagord { font-style: italic; margin-bottom: 8px; }
+    .bunntekst p { margin: 0; }
   </style>
 </head>
 <body>
@@ -122,18 +132,32 @@
     <!-- Fane 2: Ukens ord -->
     <div id="fane-ord" hidden>
       <h1>Ukens ord</h1>
-      <p class="dato">Kåres søndag kveld</p>
+      <p class="dato">Kåres hver søndag kl. 18:00</p>
 
       <div class="ukensord">
-        <div class="etikett">DENNE UKA</div>
-        <div class="ord" id="ukensord-ord">Ingen ennå</div>
-        <div class="av" id="ukensord-av">Første vinner kåres søndag kveld</div>
+        <div class="etikett" id="boks-etikett">UKENS ORD KÅRES OM</div>
+        <div class="ord" id="boks-hoved">…</div>
+        <div class="av" id="boks-under"></div>
       </div>
 
-      <h2>Forslag til neste uke</h2>
+      <h2>Ukas forslag</h2>
       <p class="liten" id="fase-tekst"></p>
       <div id="ord-innhold"></div>
+
+      <h2>Tidligere ukens ord</h2>
+      <ul id="historikk" class="historikk"></ul>
     </div>
+
+    <footer class="bunntekst">
+      <div class="firma">BørveSoft Enterprise Solutions™</div>
+      <div class="slagord">Leading the paradigm shift in synergistic household facilitation</div>
+      <p>© <span id="aar">2026</span> BørveSoft Enterprise Solutions™, en del av Børve Group International ·
+        Utviklet av Daniel, Kollektivets IT-konsulent (honorar: én pils) ·
+        Powered by AI &amp; Blockchain™ (ikke egentlig) · ISO 9001-sertifisert (ikke egentlig) ·
+        GDPR-compliant (tror vi) · 99,9 % oppetid (når Daniel er våken) ·
+        Snart børsnotert på Oslo Børs™ · Investor Relations: bank på rommet mitt ·
+        Klager rettes til nærmeste søppelpose · Org.nr. 69 420 1337</p>
+    </footer>
   </main>
 
   <nav class="faner">
@@ -204,10 +228,12 @@
     }
 
     // Knappene
+    let valgtUke = 0;
     const knapper = document.querySelectorAll(".knapper button");
     knapper.forEach(knapp => {
       knapp.onclick = () => {
-        visUke(Number(knapp.dataset.uke));
+        valgtUke = Number(knapp.dataset.uke);
+        visUke(valgtUke);
         knapper.forEach(k => k.className = "");
         knapp.className = "aktiv";
       };
@@ -234,6 +260,8 @@
 
     let meg = null;        // { navn, pin } når du er logget inn
     let data = null;       // siste svar fra scriptet
+    let henter = false;
+    let sistHentet = 0;
     let melding = { tekst: "", type: "" };
 
     // Telefonen husker hvem du er (kan feile i privat modus – da må du bare logge inn igjen)
@@ -263,26 +291,69 @@
 
     function visMelding(tekst, type = "feil") { melding = { tekst, type }; tegnOrd(); }
 
-    function tegnUkensOrd() {
-      const v = data && data.ukensOrd;
-      if (!v) return;
-      document.getElementById("ukensord-ord").textContent = v.ord;
-      document.getElementById("ukensord-av").textContent =
-        `foreslått av ${v.av} · ${v.stemmer} ${v.stemmer === 1 ? "stemme" : "stemmer"}`;
+    // Søndag kl. 18 denne uka
+    function frist() {
+      const f = new Date();
+      f.setDate(f.getDate() + 7 - (f.getDay() || 7));
+      f.setHours(data ? data.fristKl : 18, 0, 0, 0);
+      return f;
+    }
+
+    // Den store rosa boksen: nedtelling, eller vinneren etter fristen
+    function tegnBoks() {
+      if (!data) return;
+      const etikett = document.getElementById("boks-etikett");
+      const hoved = document.getElementById("boks-hoved");
+      const under = document.getElementById("boks-under");
+
+      if (data.aapen) {
+        const igjen = frist() - new Date();
+        if (igjen <= 0) {                       // fristen er nådd – spør om vinneren
+          if (Date.now() - sistHentet > 30000) oppdater();
+          return;
+        }
+        const s = Math.floor(igjen / 1000);
+        const d = Math.floor(s / 86400), t = Math.floor(s % 86400 / 3600);
+        const m = Math.floor(s % 3600 / 60), sek = String(s % 60).padStart(2, "0");
+        etikett.textContent = "UKENS ORD KÅRES OM";
+        hoved.textContent = d > 0 ? `${d} d ${t} t ${m} min` : `${t} t ${m} min ${sek} s`;
+        under.textContent = `søndag kl. ${data.fristKl}:00 · uke ${data.uke}`;
+      } else {
+        const v = data.kaaret;
+        etikett.textContent = `UKENS ORD · UKE ${data.uke}`;
+        hoved.textContent = v ? v.ord : "Ingen stemmer 😢";
+        under.textContent = (v ? `${v.stemmer} ${v.stemmer === 1 ? "stemme" : "stemmer"} · ` : "") +
+                            "ny runde starter mandag";
+      }
+    }
+    setInterval(tegnBoks, 1000);
+
+    function tegnHistorikk() {
+      const ul = document.getElementById("historikk");
+      ul.innerHTML = "";
+      (data ? data.historikk : []).forEach(h =>
+        ul.append(el("li", {}, el("span", { class: "uke" }, "Uke " + h.uke), el("span", { class: "ord" }, h.ord))));
     }
 
     function tegnOrd() {
       const innhold = document.getElementById("ord-innhold");
       const faseTekst = document.getElementById("fase-tekst");
       innhold.innerHTML = "";
+      if (!data) { faseTekst.textContent = "Henter…"; return; }
+
+      // Navnet på telefonen finnes ikke lenger (f.eks. byttet navn) → logg ut
+      if (meg && !data.navn.includes(meg.navn)) { meg = null; lagreMeg(); }
       const meldingEl = el("p", { class: "melding " + melding.type }, melding.tekst);
+
+      faseTekst.textContent = data.aapen
+        ? `Foreslå ord og stem frem til søndag kl. ${data.fristKl}. Du kan bytte stemme helt til fristen.`
+        : "Avstemningen er stengt. Ny runde starter mandag.";
 
       // --- Ikke logget inn: velg navn og PIN ---
       if (!meg) {
-        faseTekst.textContent = "Logg inn for å foreslå og stemme.";
         const velg = el("select", { id: "velg-navn" },
           el("option", { value: "" }, "Hvem er du?"),
-          folk.map(n => el("option", { value: n }, n)));
+          data.navn.map(n => el("option", { value: n }, n)));
         const pin = el("input", { id: "pin", type: "password", inputmode: "numeric",
                                   maxlength: "4", placeholder: "PIN (4 siffer)", autocomplete: "off" });
         const knapp = el("button", { class: "hoved" }, "Logg inn");
@@ -292,33 +363,23 @@
           knapp.disabled = true; knapp.textContent = "Sjekker…";
           try {
             const svar = await api("logginn", { navn: velg.value, pin: pin.value });
-            if (!svar.ok) { knapp.disabled = false; knapp.textContent = "Logg inn"; return visMelding(svar.feil); }
+            if (!svar.ok) return visMelding(svar.feil);
             meg = { navn: velg.value, pin: pin.value };
             lagreMeg();
             visMelding(svar.ny ? "PIN registrert! Husk den 😉" : "Velkommen tilbake!", "ok");
           } catch (e) {
-            knapp.disabled = false; knapp.textContent = "Logg inn";
             visMelding("Fikk ikke kontakt. Prøv igjen.");
           }
         };
         innhold.append(el("div", { class: "kort" },
-          el("label", { for: "velg-navn" }, "Velg navn og PIN"),
+          el("label", { for: "velg-navn" }, "Logg inn for å foreslå og stemme"),
           el("div", { class: "rad" }, velg),
           el("div", { class: "rad", style: "margin-top:8px" }, pin, knapp),
           el("p", { class: "liten", style: "margin:8px 0 0" },
-             "Første gang du logger inn, blir PIN-en du skriver din PIN."),
+             "Første gang? Bare finn på en PIN med fire siffer. Den bruker du for å logge inn senere."),
           meldingEl));
         return;
       }
-
-      if (!data) { faseTekst.textContent = "Henter…"; return; }
-
-      const kanForeslaa = data.fase !== "stemming";
-      const kanStemme  = data.fase !== "forslag";
-      faseTekst.textContent =
-        data.fase === "begge"    ? "Foreslå ord og stem – vinneren blir ukens ord neste uke." :
-        data.fase === "stemming" ? "Stemmingen er åpen til midnatt – stem på favoritten din!" :
-                                   `Kom med forslag! Stemmingen åpner søndag kl. ${data.stemmingFraKl}.`;
 
       // --- Logget inn som ... ---
       const loggUt = el("button", { class: "lenke" }, "Logg ut");
@@ -326,7 +387,7 @@
       innhold.append(el("p", { class: "liten" }, `Logget inn som ${meg.navn} · `, loggUt));
 
       // --- Skriv forslag ---
-      if (kanForeslaa) {
+      if (data.aapen) {
         const felt = el("input", { id: "nytt-ord", maxlength: "30", placeholder: "Nytt ord…" });
         const send = el("button", { class: "hoved" }, "Foreslå");
         send.onclick = async () => {
@@ -352,17 +413,19 @@
         const deler = [el("div", { class: "tekst" },
           el("div", { class: "ordtekst" }, f.ord),
           el("div", { class: "av" }, "av " + f.av))];
-        if (kanStemme) {
-          const k = el("button", { class: "stem" + (minStemme ? " valgt" : "") },
-                       (minStemme ? "✓ " : "") + f.velgere.length + " 👍");
+        const tall = (minStemme ? "✓ " : "") + f.velgere.length + " 👍";
+        if (data.aapen) {
+          const k = el("button", { class: "stem" + (minStemme ? " valgt" : "") }, tall);
           k.onclick = async () => {
             if (minStemme) return;
             k.disabled = true;
             await kjor("stem", { ord: f.ord }, "Stemme registrert!");
           };
           deler.push(k);
-          if (f.velgere.length) deler.push(el("div", { class: "velgere" }, f.velgere.join(", ")));
+        } else {
+          deler.push(el("span", { class: "stem" + (minStemme ? " valgt" : "") }, tall));
         }
+        if (f.velgere.length) deler.push(el("div", { class: "velgere" }, f.velgere.join(", ")));
         ul.append(el("li", { class: "forslag" }, deler));
       });
       innhold.append(ul);
@@ -374,29 +437,49 @@
         const svar = await api(handling, ekstra);
         if (!svar.ok) return visMelding(svar.feil);
         data = svar;
-        tegnUkensOrd();
+        sistHentet = Date.now();
+        tegnBoks();
+        tegnHistorikk();
         visMelding(okTekst, "ok");
       } catch (e) {
         visMelding("Fikk ikke kontakt. Prøv igjen.");
       }
     }
 
-    async function startOrd() {
-      if (!SKRIPT_URL) {                       // ikke koblet til Google Sheets ennå
-        document.getElementById("fase-tekst").textContent = "Kommer snart 👀";
-        return;
-      }
-      tegnOrd();
+    // Henter alt fra Google Sheets og tegner ukens ord-fanen
+    async function oppdater() {
+      if (!SKRIPT_URL || henter) return;
+      henter = true;
+      sistHentet = Date.now();
       try {
-        data = await api("hent");
-        tegnUkensOrd();
+        const svar = await api("hent");
+        if (!svar.ok) throw new Error(svar.feil);
+        data = svar;
+        tegnBoks();
+        tegnHistorikk();
         tegnOrd();
       } catch (e) {
-        document.getElementById("fase-tekst").textContent = "Fikk ikke hentet ukens ord akkurat nå.";
+        if (!data) document.getElementById("fase-tekst").textContent = "Fikk ikke hentet ukens ord akkurat nå.";
+      } finally {
+        henter = false;
       }
     }
 
-    startOrd();
+    document.getElementById("aar").textContent = new Date().getFullYear();
+
+    if (SKRIPT_URL) {
+      tegnOrd();
+      oppdater();
+    } else {
+      document.getElementById("boks-hoved").textContent = "Kommer snart 👀";
+    }
+
+    // Når du åpner siden igjen (f.eks. dagen etter): oppdater alt
+    document.addEventListener("visibilitychange", () => {
+      if (document.hidden) return;
+      visUke(valgtUke);
+      oppdater();
+    });
   </script>
 </body>
 </html>
