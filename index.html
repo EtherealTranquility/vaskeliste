@@ -105,6 +105,25 @@
     .historikk .uke { color: var(--dempet); white-space: nowrap; }
     .historikk .ord { font-weight: 600; text-align: right; word-break: break-word; }
 
+    /* ---------- Popup ---------- */
+    .popup-bak {
+      position: fixed; inset: 0; background: rgba(59, 28, 44, 0.45);
+      display: flex; align-items: center; justify-content: center; padding: 24px; z-index: 10;
+    }
+    .popup {
+      background: var(--kort); border-radius: 18px; padding: 22px 20px 18px;
+      max-width: 320px; width: 100%; text-align: center;
+    }
+    .popup .ikon { font-size: 2.2rem; }
+    .popup h3 { margin: 6px 0 4px; font-size: 1.2rem; }
+    .popup p { margin: 0 0 16px; color: var(--dempet); }
+    .popup .knapperad { display: flex; gap: 8px; }
+    .popup .knapperad button { flex: 1; }
+    .popup .sekundaer {
+      border: 1px solid var(--kant); background: #fff; color: var(--tekst);
+      border-radius: 10px; padding: 10px 16px; font-size: 1rem; cursor: pointer;
+    }
+
     /* ---------- Bunntekst ---------- */
     .bunntekst { margin-top: 48px; text-align: center; color: var(--dempet); font-size: 0.75rem; line-height: 1.5; }
     .bunntekst .firma { font-weight: 700; font-size: 0.9rem; color: var(--tekst); }
@@ -423,6 +442,11 @@
             await kjor("stem", { ord: f.ord }, "Stemme registrert!");
           };
           deler.push(k);
+        } else if (data.aapen) {
+          // Ikke logget inn: knappen vises, men gir beskjed om å logge inn
+          const k = el("button", { class: "stem" }, tall);
+          k.onclick = visLoggInnPopup;
+          deler.push(k);
         } else {
           deler.push(el("span", { class: "stem" + (minStemme ? " valgt" : "") }, tall));
         }
@@ -430,6 +454,28 @@
         ul.append(el("li", { class: "forslag" }, deler));
       });
       return ul;
+    }
+
+    // Popup når man prøver å stemme uten å være logget inn
+    function visLoggInnPopup() {
+      const lukk = () => bak.remove();
+      const loggInn = el("button", { class: "hoved" }, "Logg inn");
+      loggInn.onclick = () => {
+        lukk();
+        const velg = document.getElementById("velg-navn");
+        velg.scrollIntoView({ behavior: "smooth", block: "center" });
+        velg.focus();
+      };
+      const avbryt = el("button", { class: "sekundaer" }, "Lukk");
+      avbryt.onclick = lukk;
+      const bak = el("div", { class: "popup-bak" },
+        el("div", { class: "popup" },
+          el("div", { class: "ikon" }, "🔒"),
+          el("h3", {}, "Logg inn for å stemme"),
+          el("p", {}, "Velg navnet ditt og skriv PIN-en din først."),
+          el("div", { class: "knapperad" }, avbryt, loggInn)));
+      bak.onclick = e => { if (e.target === bak) lukk(); };   // trykk utenfor = lukk
+      document.body.append(bak);
     }
 
     // Sender en handling og tegner siden på nytt med svaret
