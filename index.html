@@ -376,6 +376,7 @@
           el("p", { class: "liten", style: "margin:8px 0 0" },
              "Første gang? Bare finn på en PIN med fire siffer. Den bruker du for å logge inn senere."),
           meldingEl));
+        innhold.append(forslagsliste());
         return;
       }
 
@@ -401,18 +402,20 @@
       innhold.append(meldingEl);
 
       // --- Liste over forslag ---
-      if (!data.forslag.length) {
-        innhold.append(el("p", { class: "liten" }, "Ingen forslag ennå denne uka."));
-        return;
-      }
+      innhold.append(forslagsliste());
+    }
+
+    // Forslagene med stemmer – vises for alle, men bare innloggede kan trykke «Stem»
+    function forslagsliste() {
+      if (!data.forslag.length) return el("p", { class: "liten" }, "Ingen forslag ennå denne uka.");
       const ul = el("ul");
       data.forslag.forEach(f => {
-        const minStemme = f.velgere.includes(meg.navn);
+        const minStemme = !!meg && f.velgere.includes(meg.navn);
         const deler = [el("div", { class: "tekst" },
           el("div", { class: "ordtekst" }, f.ord),
           el("div", { class: "av" }, "av " + f.av))];
         const tall = (minStemme ? "✓ " : "") + f.velgere.length + " 👍";
-        if (data.aapen) {
+        if (data.aapen && meg) {
           const k = el("button", { class: "stem" + (minStemme ? " valgt" : "") }, tall);
           k.onclick = async () => {
             if (minStemme) return;
@@ -423,10 +426,10 @@
         } else {
           deler.push(el("span", { class: "stem" + (minStemme ? " valgt" : "") }, tall));
         }
-        if (f.velgere.length) deler.push(el("div", { class: "velgere" }, f.velgere.join(", ")));
+        if (f.velgere.length) deler.push(el("div", { class: "velgere" }, "Stemt på av: " + f.velgere.join(", ")));
         ul.append(el("li", { class: "forslag" }, deler));
       });
-      innhold.append(ul);
+      return ul;
     }
 
     // Sender en handling og tegner siden på nytt med svaret
