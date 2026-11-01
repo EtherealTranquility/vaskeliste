@@ -105,6 +105,19 @@
     .historikk .uke { color: var(--dempet); white-space: nowrap; }
     .historikk .ord { font-weight: 600; text-align: right; word-break: break-word; }
 
+    /* ---------- Innlogget-merke ---------- */
+    .innlogget {
+      display: flex; align-items: center; gap: 10px;
+      background: var(--rosa-lys); border-radius: 999px; padding: 6px 8px 6px 6px; margin-bottom: 14px;
+    }
+    .innlogget .avatar {
+      width: 32px; height: 32px; border-radius: 50%; background: var(--rosa); color: #fff;
+      display: flex; align-items: center; justify-content: center; font-weight: 700;
+    }
+    .innlogget .hvem { flex: 1; font-size: 0.95rem; }
+    .innlogget .hvem small { display: block; color: var(--dempet); font-size: 0.75rem; }
+    .innlogget .lenke { padding: 6px 10px; }
+
     /* ---------- Popup ---------- */
     .popup-bak {
       position: fixed; inset: 0; background: rgba(59, 28, 44, 0.45);
@@ -383,7 +396,7 @@
             if (!svar.ok) return visMelding(svar.feil);
             meg = { navn: velg.value, pin: pin.value };
             lagreMeg();
-            visMelding(svar.ny ? "PIN registrert! Husk den 😉" : "Velkommen tilbake!", "ok");
+            visMelding(svar.ny ? "PIN registrert! Husk den 😉" : "", "ok");
           } catch (e) {
             visMelding("Fikk ikke kontakt. Prøv igjen.");
           }
@@ -402,7 +415,10 @@
       // --- Logget inn som ... ---
       const loggUt = el("button", { class: "lenke" }, "Logg ut");
       loggUt.onclick = () => { meg = null; lagreMeg(); melding = { tekst: "", type: "" }; tegnOrd(); };
-      innhold.append(el("p", { class: "liten" }, `Logget inn som ${meg.navn} · `, loggUt));
+      innhold.append(el("div", { class: "innlogget" },
+        el("div", { class: "avatar" }, meg.navn[0]),
+        el("div", { class: "hvem" }, el("small", {}, "Logget inn som"), el("strong", {}, meg.navn)),
+        loggUt));
 
       // --- Skriv forslag ---
       if (data.aapen) {
