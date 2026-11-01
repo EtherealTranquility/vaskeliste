@@ -163,7 +163,7 @@
     <!-- Fane 2: Ukens ord -->
     <div id="fane-ord" hidden>
       <h1>Ukens ord</h1>
-      <p class="dato">Kåres hver søndag kl. 18:00</p>
+      <p class="dato">Kåres hver søndag kl. 21:00</p>
 
       <div class="ukensord">
         <div class="etikett" id="boks-etikett">UKENS ORD KÅRES OM</div>
@@ -321,11 +321,11 @@
 
     function visMelding(tekst, type = "feil") { melding = { tekst, type }; tegnOrd(); }
 
-    // Søndag kl. 18 denne uka
+    // Søndag kl. 21 denne uka
     function frist() {
       const f = new Date();
       f.setDate(f.getDate() + 7 - (f.getDay() || 7));
-      f.setHours(data ? data.fristKl : 18, 0, 0, 0);
+      f.setHours(data ? data.fristKl : 21, 0, 0, 0);
       return f;
     }
 
